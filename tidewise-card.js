@@ -8,7 +8,7 @@
  * Legacy alias: custom:cherry-grove-tides-card
  */
 
-const CARD_VERSION = "0.9.9-fork.1";
+const CARD_VERSION = "0.9.9-fork.2";
 // An unset height retains the original responsive desktop/mobile dimensions.
 function normalizeChartHeight(value) {
   if (value == null || String(value).trim() === "") return null;
@@ -372,6 +372,7 @@ class TideWiseCard extends HTMLElement {
       show_next_low: true,
       show_next_high: true,
       show_fishing_score: true,
+      show_best_window: true,
       auto_sources: true,
       auto_surf_forecast: true,
       srf_region: "",
@@ -443,6 +444,7 @@ class TideWiseCard extends HTMLElement {
       show_next_low: config.show_next_low !== false,
       show_next_high: config.show_next_high !== false,
       show_fishing_score: config.show_fishing_score !== false,
+      show_best_window: config.show_best_window !== false,
       auto_sources: config.auto_sources !== false,
       auto_surf_forecast: config.auto_surf_forecast !== false,
       srf_region: String(config.srf_region || ""),
@@ -2143,7 +2145,7 @@ class TideWiseCard extends HTMLElement {
         <div class="fish-footer">
           <div class="fish-reason">${this._escape(fish.reason)}</div>
           ${this._safetyBadgeHtml(fish.currentDetail)}
-          <div class="fish-next">${fish.bestWindow ? "Best: " + fish.bestWindow : ""}</div>
+          ${this._config.show_best_window !== false && fish.bestWindow ? `<div class="fish-next">Best: ${this._escape(fish.bestWindow)}</div>` : ""}
         </div>
         <div class="fish-legend">
           <div class="legend-item elite"><div class="legend-dot elite"></div>Elite</div>
@@ -2836,6 +2838,7 @@ class TideWiseCardEditor extends HTMLElement {
       show_next_low: true,
       show_next_high: true,
       show_fishing_score: true,
+      show_best_window: true,
       auto_sources: true,
       auto_surf_forecast: true,
       grid_options: { rows: "full", columns: 18 },
@@ -3900,6 +3903,10 @@ class TideWiseCardEditor extends HTMLElement {
             <input id="showFishing" type="checkbox" ${config.show_fishing_score !== false ? "checked" : ""}>
             Show fishing score
           </label>
+          ${config.show_fishing_score !== false ? `<label class="check">
+            <input id="showBestWindow" type="checkbox" ${config.show_best_window !== false ? "checked" : ""}>
+            Show best fishing window
+          </label>` : ""}
           <label class="check">
             <input id="autoSources" type="checkbox" ${config.auto_sources !== false ? "checked" : ""}>
             Fetch NOAA/NWS auto sources
@@ -4047,6 +4054,7 @@ class TideWiseCardEditor extends HTMLElement {
     this.shadowRoot.getElementById("showNextLow")?.addEventListener("change", (event) => this._setValue("show_next_low", event.target.checked));
     this.shadowRoot.getElementById("showNextHigh")?.addEventListener("change", (event) => this._setValue("show_next_high", event.target.checked));
     this.shadowRoot.getElementById("showFishing")?.addEventListener("change", (event) => this._setValue("show_fishing_score", event.target.checked));
+    this.shadowRoot.getElementById("showBestWindow")?.addEventListener("change", (event) => this._setValue("show_best_window", event.target.checked));
     this.shadowRoot.getElementById("autoSources")?.addEventListener("change", (event) => this._setValue("auto_sources", event.target.checked));
     this.shadowRoot.getElementById("autoSurfForecast")?.addEventListener("change", (event) => this._setValue("auto_surf_forecast", event.target.checked));
     this.shadowRoot.getElementById("gridRows")?.addEventListener("change", (event) => this._setGridValue("rows", event.target.value));

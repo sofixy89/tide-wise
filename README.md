@@ -15,6 +15,7 @@ The original **MIT license and Copyright (c) 2026 Will Miller** are preserved un
 - Touch, trackpad, mouse-drag and keyboard scrolling; position retained on refresh.
 - Independent settings for showing the title, station ID/name and each next-tide panel.
 - Optional chart height in pixels (47.5–190px), configurable in the visual editor or YAML with `chart_height: 95`. Leave unset to keep the original responsive height (95px desktop, 92/86px mobile).
+- Optional best-window label: uncheck **Show best fishing window** while fishing scores are enabled, or set `show_best_window: false`, to remove the blue “Best:” line and its layout space. Enabled by default.
 - Larger Y-axis labels and higher-resolution canvas rendering.
 - Removal of the backdrop filter that caused washed-out text at 1.05x zoom on the maintainer's dashboard.
 - Approximately halved vertical padding and gaps, retaining font sizes and graph height.

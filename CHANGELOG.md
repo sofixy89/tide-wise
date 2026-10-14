@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.9.9-fork.2 — 2026-10-14
+
+- Add “Show best fishing window” under the fishing score setting (enabled by default).
+- Setting `show_best_window: false` removes the Best label element entirely, reclaiming its row on narrow cards. The fishing explanation and legend remain visible.
+
 ## 0.9.9-fork.1 — 2026-10-14
 
 - Add an optional chart height field in pixels, from 47.5px (50%) to 190px (200%) of the 95px desktop default.
