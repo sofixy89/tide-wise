@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.9.9-fork.1 — 2026-10-14
+
+- Add an optional chart height field in pixels, from 47.5px (50%) to 190px (200%) of the 95px desktop default.
+- Preserve existing responsive heights when unset; custom heights apply on mobile too.
+- Reduce Y-axis tick density at compact heights and keep tide-event label boxes within the plot.
+
 ## Five-day scrolling fork — 2026-10-14
 
 Independent fork by sofixy89 of Will Miller's TideWise v0.9.8. Original MIT license and copyright preserved.

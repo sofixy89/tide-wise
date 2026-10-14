@@ -8,7 +8,13 @@
  * Legacy alias: custom:cherry-grove-tides-card
  */
 
-const CARD_VERSION = "0.9.8";
+const CARD_VERSION = "0.9.9-fork.1";
+// An unset height retains the original responsive desktop/mobile dimensions.
+function normalizeChartHeight(value) {
+  if (value == null || String(value).trim() === "") return null;
+  const height = Number(value);
+  return Number.isFinite(height) ? Math.max(47.5, Math.min(190, height)) : null;
+}
 const CARD_TYPES = ["tidewise-card", "cherry-grove-tides-card"];
 const TIDEWISE_PROVIDERS = {
   noaa_coops: { label: "US NOAA CO-OPS", stationLabel: "NOAA" },
@@ -242,7 +248,7 @@ const STYLES = `
   .forecast-scroll::-webkit-scrollbar { display: none; }
   .forecast-viewport { position: sticky; left: 0; }
   .forecast-scroll:focus-visible { outline: 2px solid var(--wave); outline-offset: 2px; }
-  .chart-wrap { position: relative; height: 95px; border-radius: 10px; overflow: hidden; }
+  .chart-wrap { position: relative; height: var(--tw-chart-height, 95px); border-radius: 10px; overflow: hidden; }
   canvas { display: block; width: 100%; height: 100%; }
   .x-row { display: flex; justify-content: space-between; margin-top: 1px; padding: 0 2px 0 2px; }
   .x-tick { font-size: 13px; font-weight: 650; color: var(--text-muted); }
@@ -297,7 +303,7 @@ const STYLES = `
     .section-label { font-size: 12px; }
     .fish-badge-row { justify-content: flex-start; flex-wrap: wrap; gap: 3px 5px; }
     .water-temp-chip, .fish-moon, .fish-score { font-size: 12px; }
-    .chart-wrap { height: 92px; }
+    .chart-wrap { height: var(--tw-chart-height, 92px); }
     .x-tick { font-size: 12px; }
     .fish-footer { flex-wrap: wrap; gap: 3px 8px; }
     .fish-reason { flex: 1 0 100%; max-height: 38px; font-size: 11.5px; }
@@ -315,7 +321,7 @@ const STYLES = `
   @container (max-width: 390px) {
     .title { font-size: 22px; }
     .current-value { font-size: 30px; }
-    .chart-wrap { height: 86px; }
+    .chart-wrap { height: var(--tw-chart-height, 86px); }
     .fish-next { flex: 1 0 100%; margin-left: 0; }
     .tides-grid { grid-template-columns: 1fr; }
     .pill-main { justify-content: space-between; }
@@ -431,6 +437,7 @@ class TideWiseCard extends HTMLElement {
       longitude: Number(config.longitude) || -78.886,
       mode: String(config.mode || "general").toLowerCase(),
       theme_mode: this._normalizeThemeMode(config.theme_mode),
+      chart_height: normalizeChartHeight(config.chart_height),
       show_title: config.show_title !== false,
       show_station: config.show_station !== false,
       show_next_low: config.show_next_low !== false,
@@ -2127,7 +2134,7 @@ class TideWiseCard extends HTMLElement {
         </div>
         <div class="forecast-scroll" id="forecastScroll" tabindex="0" role="region" aria-label="Tide forecast. Scroll right for up to five days ahead.">
           <div id="forecastTrack"><div class="forecast-viewport" id="forecastViewport">
-            <div class="chart-wrap"><canvas id="tideCanvas"></canvas></div>
+            <div class="chart-wrap"${this._config.chart_height != null ? ` style="--tw-chart-height: ${this._config.chart_height}px"` : ""}><canvas id="tideCanvas"></canvas></div>
             <div id="forecastAxis">${this._xAxisHtml(chartPredictions)}</div>
           </div></div>
         </div>
@@ -2542,8 +2549,9 @@ class TideWiseCard extends HTMLElement {
 
     ctx.strokeStyle = theme.grid;
     ctx.lineWidth = 1;
-    for (let i = 0; i <= 3; i++) {
-      const v = minV + (i / 3) * (maxV - minV);
+    const axisIntervals = H < 65 ? 2 : 3;
+    for (let i = 0; i <= axisIntervals; i++) {
+      const v = minV + (i / axisIntervals) * (maxV - minV);
       const y = toY(v);
       ctx.beginPath();
       ctx.moveTo(padL, y);
@@ -2659,6 +2667,7 @@ class TideWiseCard extends HTMLElement {
       if (lx + lw + 8 > W - padR) lx = W - padR - lw - 8;
       if (ly < padT) ly = ey + 10;
       if (ly > H - padB - 16) ly = ey - 20;
+      ly = Math.max(padT, Math.min(H - padB - 16, ly));
       ctx.fillStyle = theme.labelBg;
       ctx.strokeStyle = theme.labelBorder;
       ctx.lineWidth = 1;
@@ -3866,6 +3875,11 @@ class TideWiseCardEditor extends HTMLElement {
           </div>
           <div class="hint">Optional safe-tide limits draw labeled lines and lightly shade unsafe water levels on the chart. Values use the selected tide unit; leave either field blank to disable that limit.</div>
           ${safeTideRangeInvalid ? `<div class="hint"><strong>Check the safe range:</strong> minimum safe tide should not exceed maximum safe tide.</div>` : ""}
+          <label>
+            Chart height (px)
+            <input id="chartHeight" type="number" min="47.5" max="190" step="0.5" value="${normalizeChartHeight(config.chart_height) ?? ""}" placeholder="95 (default)">
+          </label>
+          <div class="hint">47.5–190px (50–200%). Leave blank for the original responsive height: 95px on desktop, 92px or 86px on smaller cards. A custom height applies at all screen sizes.</div>
           <label class="check">
             <input id="showTitle" type="checkbox" ${config.show_title !== false ? "checked" : ""}>
             Show card title
@@ -4024,6 +4038,10 @@ class TideWiseCardEditor extends HTMLElement {
     this.shadowRoot.getElementById("maximumSafeTide")?.addEventListener("change", (event) => this._setOptionalNumber("maximum_safe_tide", event.target.value));
     this.shadowRoot.getElementById("mode")?.addEventListener("change", (event) => this._setValue("mode", event.target.value));
     this.shadowRoot.getElementById("themeMode")?.addEventListener("change", (event) => this._setValue("theme_mode", this._normalizeThemeMode(event.target.value)));
+    this.shadowRoot.getElementById("chartHeight")?.addEventListener("change", (event) => {
+      const height = normalizeChartHeight(event.target.value);
+      this._setOptionalNumber("chart_height", height ?? "");
+    });
     this.shadowRoot.getElementById("showTitle")?.addEventListener("change", (event) => this._setValue("show_title", event.target.checked));
     this.shadowRoot.getElementById("showStation")?.addEventListener("change", (event) => this._setValue("show_station", event.target.checked));
     this.shadowRoot.getElementById("showNextLow")?.addEventListener("change", (event) => this._setValue("show_next_low", event.target.checked));

@@ -123,7 +123,7 @@ console.log("safe tide limit tests passed");
 
 // Fractional dashboard zoom and browser DPR must both be reflected in the
 // backing bitmap, while drawing continues in the original layout coordinates.
-for (const zoom of [1, 1.05, 1.1]) {
+for (const height of [47.5, 95, 190]) for (const zoom of [1, 1.05, 1.1]) {
   let scale;
   const context = new Proxy({}, { get: (target, key) => {
     if (key === 'scale') return (...args) => { scale = args; };
@@ -133,8 +133,8 @@ for (const zoom of [1, 1.05, 1.1]) {
   const card = createCard();
   window.devicePixelRatio = 1.25;
   const canvas = card._chartCanvas = {
-    offsetWidth: 340, offsetHeight: 95,
-    getBoundingClientRect: () => ({ width: 340 * zoom, height: 95 * zoom }),
+    offsetWidth: 340, offsetHeight: height,
+    getBoundingClientRect: () => ({ width: 340 * zoom, height: height * zoom }),
     getContext: () => context
   };
   card._drawChart([
@@ -142,7 +142,30 @@ for (const zoom of [1, 1.05, 1.1]) {
     { t: '2026-10-13 12:00', v: '3' }
   ], new Date(2026, 9, 13, 6), 2, 'ft', null, null);
   assert(canvas.width >= 340 * zoom * 1.25 * 2, 'bitmap should cover zoomed physical width with supersampling');
-  assert(canvas.height >= 95 * zoom * 1.25 * 2, 'bitmap should cover zoomed physical height with supersampling');
-  assert(scale[0] === canvas.width / 340 && scale[1] === canvas.height / 95, 'drawing scale must match rounded bitmap dimensions');
+  assert(canvas.height >= height * zoom * 1.25 * 2, 'bitmap should cover zoomed physical height with supersampling');
+  assert(scale[0] === canvas.width / 340 && scale[1] === canvas.height / height, 'drawing scale must match rounded bitmap dimensions');
 }
 console.log('fractional zoom canvas tests passed');
+
+// YAML and editor values share the same bounded pixel range; blank resets defaults.
+{
+  const card = createCard();
+  card._render = () => {};
+  card._fetchData = () => {};
+  for (const [input, expected] of [[undefined, null], [null, null], ['', null], ['bad', null], [Infinity, null], [0, 47.5], [47.5, 47.5], ['120', 120], [95, 95], [190, 190], [500, 190]]) {
+    card.setConfig({ station: '8726520', chart_height: input });
+    assert(card._config.chart_height === expected, `chart height ${input} should normalize to ${expected}`);
+  }
+  const editor = new TideWiseCardEditor();
+  const listeners = {};
+  editor.shadowRoot = { innerHTML: '', getElementById: id => id === 'chartHeight' ? { addEventListener: (name, fn) => { listeners[name] = fn; } } : null };
+  editor._renderForecastMapTiles = () => {};
+  editor.setConfig({ station: '8726520' });
+  assert(editor.shadowRoot.innerHTML.includes('id="chartHeight"'), 'visual editor should expose chart height');
+  editor._emitConfig = next => { editor._config = next; };
+  listeners.change({ target: { value: '250' } });
+  assert(editor._config.chart_height === 190, 'editor should clamp to maximum');
+  listeners.change({ target: { value: '' } });
+  assert(!('chart_height' in editor._config), 'clearing height should restore responsive defaults');
+}
+console.log('chart height configuration tests passed');

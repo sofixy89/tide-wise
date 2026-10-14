@@ -14,6 +14,7 @@ The original **MIT license and Copyright (c) 2026 Will Miller** are preserved un
 - A 12-hour graph viewport with horizontal scrolling through five days.
 - Touch, trackpad, mouse-drag and keyboard scrolling; position retained on refresh.
 - Independent settings for showing the title, station ID/name and each next-tide panel.
+- Optional chart height in pixels (47.5–190px), configurable in the visual editor or YAML with `chart_height: 95`. Leave unset to keep the original responsive height (95px desktop, 92/86px mobile).
 - Larger Y-axis labels and higher-resolution canvas rendering.
 - Removal of the backdrop filter that caused washed-out text at 1.05x zoom on the maintainer's dashboard.
 - Approximately halved vertical padding and gaps, retaining font sizes and graph height.
