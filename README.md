@@ -1,4 +1,28 @@
-# TideWise
+# TideWise — Five-Day Scrolling Fork
+
+> **Five-day scrolling variant:** opens on the next 12 hours. Swipe left on the graph (or drag left with a mouse / scroll right on a trackpad) to move ahead through up to five days. The card keeps its existing appearance and current-tide panels. No YAML changes are needed. See [FIVE_DAY_SCROLL.md](FIVE_DAY_SCROLL.md).
+
+
+## Credits and relationship to upstream
+
+TideWise was created by **Will Miller ([TheWillMiller](https://github.com/TheWillMiller))**. This is an independent fork of [TheWillMiller/tide-wise](https://github.com/TheWillMiller/tide-wise), maintained by [sofixy89](https://github.com/sofixy89). Credit for the original card, visual design, provider integrations and fishing-scoring work goes to Will Miller and the upstream contributors.
+
+The original **MIT license and Copyright (c) 2026 Will Miller** are preserved unchanged in [LICENSE](LICENSE). This fork is not an official upstream release or an endorsement by the original author. The donation links below support the original author.
+
+## Changes in this fork
+
+- A 12-hour graph viewport with horizontal scrolling through five days.
+- Touch, trackpad, mouse-drag and keyboard scrolling; position retained on refresh.
+- Independent settings for showing the title, station ID/name and each next-tide panel.
+- Larger Y-axis labels and higher-resolution canvas rendering.
+- Removal of the backdrop filter that caused washed-out text at 1.05x zoom on the maintainer's dashboard.
+- Approximately halved vertical padding and gaps, retaining font sizes and graph height.
+
+See [FIVE_DAY_SCROLL.md](FIVE_DAY_SCROLL.md) for installation and provider limitations. Existing `custom:tidewise-card` YAML remains compatible. Load only one version of TideWise at a time.
+
+**Validation:** syntax and automated regression checks pass. The maintainer confirmed the backdrop-filter fix and compact layout on their Home Assistant dashboard; automated browser gesture checks were unavailable.
+
+The badges and screenshots below credit and illustrate the **upstream project**; screenshots may differ from this fork's compact layout.
 
 <p align="center">
   <img src="tidewise-icon@2x.png" alt="TideWise tide and coastal conditions icon" width="160">
@@ -9,7 +33,7 @@
 [![GitHub stars](https://img.shields.io/github/stars/TheWillMiller/tide-wise?label=stars)](https://github.com/TheWillMiller/tide-wise/stargazers)
 [![Buy Me a Coffee](https://img.shields.io/badge/Buy%20me%20a%20coffee-support-yellow?logo=buymeacoffee)](https://buymeacoffee.com/thewillmiller)
 
-**Latest release:** `v0.9.8`
+**Upstream base release:** `v0.9.8` (this fork includes the changes listed above).
 
 TideWise is a Home Assistant dashboard (Lovelace) custom card for tide predictions, current tide height, next high/low tides, and optional fishing bite-window scoring. The default provider is NOAA CO-OPS, with early Canada CHS/DFO support, UK support through the UKHO Tides Home Assistant integration, and international beta support through compatible Home Assistant tide sensors.
 
@@ -56,7 +80,7 @@ The UK option in TideWise is intentionally named **UK UKHO Tides integration sen
 
 UKHO integration event times are displayed in UK local time (`Europe/London`), including British Summer Time. If a UK card is still exactly one hour off, check the UKHO Tides integration sensor attributes and your Home Assistant/browser timezone.
 
-## Beta Feedback
+## Upstream Beta Feedback
 
 TideWise is in beta. If it works for your setup, please consider starring the repo so I can gauge interest and so you can follow development:
 
@@ -69,7 +93,7 @@ If you run into issues or want to confirm your station works, please open one of
 
 Helpful details include Home Assistant version, HACS version, TideWise version, browser/device, provider, station ID or tide entity ID, and a screenshot or console error if something broke.
 
-## Support TideWise
+## Support the Original Author
 
 TideWise has no telemetry, ads, popups, tracking pixels, or in-card donation prompts. If it helps you and you want to support development, you can [buy me a coffee](https://buymeacoffee.com/thewillmiller).
 
@@ -113,7 +137,7 @@ Common setup rule: **the station/sensor controls the tide chart; the forecast co
 - Water temperature display when available
 - Wind display when available, with optional MPH, km/h, knots, or Beaufort display
 - Next high and low tide
-- 24-hour tide chart
+- 12-hour tide chart
 - Optional minimum and maximum safe-tide lines with unsafe-level shading
 - High/low fallback for NOAA stations without full interval predictions
 - Visual editor support
@@ -135,7 +159,7 @@ Common setup rule: **the station/sensor controls the tide chart; the forecast co
 
 ### Recommended: HACS Custom Repository
 
-[![Open TideWise in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=TheWillMiller&repository=tide-wise&category=plugin)
+[![Open TideWise in HACS](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=sofixy89&repository=tide-wise&category=plugin)
 
 TideWise is not yet listed in the default/searchable HACS store. Until it is accepted into the default HACS list, install it as a custom HACS repository.
 
@@ -145,7 +169,7 @@ TideWise is not yet listed in the default/searchable HACS store. Until it is acc
 4. Add this repository URL:
 
 ```text
-https://github.com/TheWillMiller/tide-wise
+https://github.com/sofixy89/tide-wise
 ```
 
 5. For category, choose **Dashboard**.
@@ -189,7 +213,7 @@ type: module
 For quick testing before installing locally, you can add this dashboard resource:
 
 ```yaml
-url: https://cdn.jsdelivr.net/gh/TheWillMiller/tide-wise@v0.9.8/tidewise-card.js
+url: https://cdn.jsdelivr.net/gh/sofixy89/tide-wise@main/tidewise-card.js
 type: module
 ```
 

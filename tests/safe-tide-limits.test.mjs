@@ -120,3 +120,29 @@ function createCard(config = {}) {
 }
 
 console.log("safe tide limit tests passed");
+
+// Fractional dashboard zoom and browser DPR must both be reflected in the
+// backing bitmap, while drawing continues in the original layout coordinates.
+for (const zoom of [1, 1.05, 1.1]) {
+  let scale;
+  const context = new Proxy({}, { get: (target, key) => {
+    if (key === 'scale') return (...args) => { scale = args; };
+    if (key === 'measureText') return text => ({ width: text.length * 6 });
+    return () => {};
+  }});
+  const card = createCard();
+  window.devicePixelRatio = 1.25;
+  const canvas = card._chartCanvas = {
+    offsetWidth: 340, offsetHeight: 95,
+    getBoundingClientRect: () => ({ width: 340 * zoom, height: 95 * zoom }),
+    getContext: () => context
+  };
+  card._drawChart([
+    { t: '2026-10-13 00:00', v: '1' },
+    { t: '2026-10-13 12:00', v: '3' }
+  ], new Date(2026, 9, 13, 6), 2, 'ft', null, null);
+  assert(canvas.width >= 340 * zoom * 1.25 * 2, 'bitmap should cover zoomed physical width with supersampling');
+  assert(canvas.height >= 95 * zoom * 1.25 * 2, 'bitmap should cover zoomed physical height with supersampling');
+  assert(scale[0] === canvas.width / 340 && scale[1] === canvas.height / 95, 'drawing scale must match rounded bitmap dimensions');
+}
+console.log('fractional zoom canvas tests passed');

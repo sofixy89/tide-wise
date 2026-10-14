@@ -1,5 +1,18 @@
 # Changelog
 
+## Five-day scrolling fork — 2026-10-14
+
+Independent fork by sofixy89 of Will Miller's TideWise v0.9.8. Original MIT license and copyright preserved.
+
+- Show 12 hours by default; scroll ahead through up to five days of available tide data.
+- Extend NOAA/CHS requests and retain scroll position on refresh.
+- Add independent title, station ID/name, next-low and next-high visibility checkboxes.
+- Enlarge Y-axis text and improve canvas rendering at fractional zoom.
+- Remove container backdrop filtering to resolve washed-out whole-card text at 1.05x on the maintainer's dashboard.
+- Reduce vertical padding and gaps by approximately half.
+- Add regression coverage for forecast range, provider requests and canvas scaling.
+
+
 ## 0.9.8
 
 ### Added

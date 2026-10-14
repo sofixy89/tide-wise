@@ -1,5 +1,8 @@
 /*
- * TideWise Card v0.9.8
+ * TideWise Card — five-day scrolling fork, based on upstream v0.9.8
+ * Original author: Will Miller (https://github.com/TheWillMiller/tide-wise)
+ * Copyright (c) 2026 Will Miller. MIT License; see LICENSE.
+ * Fork maintained by sofixy89. Changes documented in FIVE_DAY_SCROLL.md.
  * NOAA tides with optional bite-window fishing quality scoring.
  *
  * Legacy alias: custom:cherry-grove-tides-card
@@ -196,8 +199,9 @@ const STYLES = `
   }
   .card-outer {
     background: linear-gradient(135deg, rgba(255,255,255,0.70), rgba(222,244,248,0.58));
-    backdrop-filter: blur(12px) saturate(1.08); -webkit-backdrop-filter: blur(12px) saturate(1.08);
-    border-radius: 22px; padding: 8px 16px 8px;
+    /* Avoid filtering the text container: fractional zoom can soften all labels. */
+    backdrop-filter: none; -webkit-backdrop-filter: none;
+    border-radius: 22px; padding: 4px 16px 4px 16px;
     border: 1px solid rgba(255,255,255,0.40); box-shadow: 0 5px 24px rgba(10,50,70,0.14);
     position: relative; overflow: hidden;
   }
@@ -208,98 +212,103 @@ const STYLES = `
   }
   ha-card { background: transparent !important; box-shadow: none !important; border-radius: 22px !important; }
   .card-outer::before { content: ""; position: absolute; top: 0; left: 0; right: 0; height: 1px; background: linear-gradient(90deg, transparent, rgba(42,122,148,0.62), transparent); }
-  .header { display: flex; align-items: flex-start; gap: 10px; margin-bottom: 5px; flex-wrap: wrap; }
+  .header { display: flex; align-items: flex-start; gap: 5px 10px; margin-bottom: 3px; flex-wrap: wrap; }
   .title { font-size: 28px; font-weight: 800; color: var(--text); line-height: 1.05; letter-spacing: 0; overflow-wrap: anywhere; min-width: 0; max-width: 100%; }
-  .subtitle { font-size: 13px; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; font-weight: 650; white-space: nowrap; padding-top: 8px; }
-  .current-row { display: flex; align-items: center; gap: 13px; flex-wrap: wrap; background: var(--tw-panel-bg); border: 1px solid var(--tw-panel-border); border-radius: 14px; padding: 7px 13px; margin-bottom: 6px; }
+  .subtitle { font-size: 13px; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; font-weight: 650; white-space: nowrap; padding-top: 4px; }
+  .current-row { display: flex; align-items: center; gap: 7px 13px; flex-wrap: wrap; background: var(--tw-panel-bg); border: 1px solid var(--tw-panel-border); border-radius: 14px; padding: 4px 13px 4px 13px; margin-bottom: 3px; }
   .current-icon { font-size: 22px; animation: bob 3s ease-in-out infinite; flex-shrink: 0; }
   @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
-  .current-label { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--wave-dark); margin-bottom: 2px; font-weight: 750; }
+  .current-label { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--wave-dark); margin-bottom: 1px; font-weight: 750; }
   .current-value { font-family: var(--font-mono); font-size: 36px; font-weight: 800; color: var(--text); line-height: 1; }
   .current-unit { font-size: 18px; color: var(--text-muted); font-weight: 650; }
-  .direction-chip { margin-left: auto; display: flex; align-items: center; gap: 8px; font-size: 18px; color: var(--wave-dark); font-weight: 750; flex-shrink: 0; }
-  .condition-chip { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--wave-dark); background: var(--tw-chip-bg); border: 1px solid var(--tw-chip-border); border-radius: 99px; padding: 4px 10px; white-space: nowrap; font-weight: 800; flex-shrink: 0; }
+  .direction-chip { margin-left: auto; display: flex; align-items: center; gap: 4px 8px; font-size: 18px; color: var(--wave-dark); font-weight: 750; flex-shrink: 0; }
+  .condition-chip { display: flex; align-items: center; gap: 3px 6px; font-size: 14px; color: var(--wave-dark); background: var(--tw-chip-bg); border: 1px solid var(--tw-chip-border); border-radius: 99px; padding: 2px 10px 2px 10px; white-space: nowrap; font-weight: 800; flex-shrink: 0; }
   .condition-spacer { flex: 1 1 auto; min-width: 12px; }
   .pulse-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--wave); box-shadow: 0 0 0 3px rgba(42,122,148,0.25); animation: pulse 2s ease-in-out infinite; flex-shrink: 0; }
   @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.5;transform:scale(0.75)} }
-  .chart-section { margin-bottom: 5px; }
-  .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px; gap: 8px; }
+  .chart-section { margin-bottom: 3px; }
+  .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2px; gap: 4px 8px; }
   .section-label { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-muted); font-weight: 750; white-space: nowrap; }
-  .fish-badge-row { display: flex; align-items: center; gap: 7px; min-width: 0; }
-  .fish-score { font-size: 13px; font-weight: 850; padding: 2px 9px; border-radius: 99px; white-space: nowrap; }
+  .fish-badge-row { display: flex; align-items: center; gap: 4px 7px; min-width: 0; }
+  .fish-score { font-size: 13px; font-weight: 850; padding: 1px 9px 1px 9px; border-radius: 99px; white-space: nowrap; }
   .score-elite { background: rgba(30,160,100,0.18); color: #0d8050; }
   .score-prime { background: rgba(42,122,148,0.18); color: var(--wave-dark); }
   .score-good { background: rgba(42,122,148,0.12); color: var(--wave-dark); }
   .score-fair { background: rgba(232,184,75,0.20); color: #8a6a10; }
   .score-slow { background: rgba(192,80,48,0.14); color: #8a3018; }
-  .water-temp-chip { font-size: 13px; color: var(--wave-dark); background: var(--tw-chip-bg); border: 1px solid var(--tw-chip-border); border-radius: 99px; padding: 2px 9px; white-space: nowrap; font-weight: 800; }
+  .water-temp-chip { font-size: 13px; color: var(--wave-dark); background: var(--tw-chip-bg); border: 1px solid var(--tw-chip-border); border-radius: 99px; padding: 1px 9px 1px 9px; white-space: nowrap; font-weight: 800; }
   .fish-moon { font-size: 13px; color: var(--text-muted); font-weight: 650; white-space: nowrap; }
+  .forecast-scroll { overflow-x: auto; scrollbar-width: none; direction: ltr; }
+  .forecast-scroll::-webkit-scrollbar { display: none; }
+  .forecast-viewport { position: sticky; left: 0; }
+  .forecast-scroll:focus-visible { outline: 2px solid var(--wave); outline-offset: 2px; }
   .chart-wrap { position: relative; height: 95px; border-radius: 10px; overflow: hidden; }
   canvas { display: block; width: 100%; height: 100%; }
-  .x-row { display: flex; justify-content: space-between; margin-top: 2px; padding: 0 2px; }
+  .x-row { display: flex; justify-content: space-between; margin-top: 1px; padding: 0 2px 0 2px; }
   .x-tick { font-size: 13px; font-weight: 650; color: var(--text-muted); }
-  .fish-footer { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-top: 2px; margin-bottom: 2px; }
+  .fish-footer { display: flex; justify-content: space-between; align-items: flex-start; gap: 4px 8px; margin-top: 1px; margin-bottom: 1px; }
   .fish-reason { font-size: 12px; color: var(--text-muted); font-weight: 650; line-height: 1.3; max-height: 34px; overflow-y: auto; scrollbar-width: thin; min-width: 0; flex: 1 1 auto; }
-  .safety-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 11px; color: #8a3018; background: rgba(192,80,48,0.12); border: 1px solid rgba(192,80,48,0.18); border-radius: 99px; padding: 2px 8px; font-weight: 850; white-space: nowrap; flex-shrink: 0; }
+  .safety-badge { display: inline-flex; align-items: center; gap: 2px 4px; font-size: 11px; color: #8a3018; background: rgba(192,80,48,0.12); border: 1px solid rgba(192,80,48,0.18); border-radius: 99px; padding: 1px 8px 1px 8px; font-weight: 850; white-space: nowrap; flex-shrink: 0; }
   .fish-next { font-size: 12px; color: var(--wave-dark); font-weight: 800; white-space: nowrap; flex-shrink: 0; }
-  .fish-legend { display: flex; align-items: center; gap: 12px; margin: 2px 0 6px; padding-left: 2px; min-width: 0; flex-wrap: nowrap; }
-  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--text-muted); font-weight: 750; white-space: nowrap; }
+  .fish-legend { display: flex; align-items: center; gap: 6px 12px; margin: 1px 0 3px 0; padding-left: 2px; min-width: 0; flex-wrap: nowrap; }
+  .legend-item { display: flex; align-items: center; gap: 3px 5px; font-size: 12.5px; color: var(--text-muted); font-weight: 750; white-space: nowrap; }
   .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
   .legend-dot.elite{background:var(--elite)} .legend-dot.prime{background:var(--prime)} .legend-dot.good{background:var(--good)} .legend-dot.fair{background:var(--fair)} .legend-dot.slow{background:var(--slow)}
   .legend-item.elite{color:#0f7a38} .legend-item.prime{color:#1d4ed8} .legend-item.good{color:#0e7490} .legend-item.fair{color:#9a5b00} .legend-item.slow{color:#a51f1f}
-  .tides-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
-  .tide-pill { background: var(--tw-panel-bg); border: 1px solid var(--tw-panel-border); border-radius: 12px; padding: 5px 12px; }
-  .pill-label { font-size: 13px; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 3px; font-weight: 750; }
+  .tides-grid.single-tide { grid-template-columns: 1fr; }
+  .tides-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 7px; }
+  .tide-pill { background: var(--tw-panel-bg); border: 1px solid var(--tw-panel-border); border-radius: 12px; padding: 3px 12px 3px 12px; }
+  .pill-label { font-size: 13px; letter-spacing: 0.07em; text-transform: uppercase; margin-bottom: 2px; font-weight: 750; }
   .pill-label.low{color:var(--low-color)} .pill-label.high{color:var(--high-color)}
-  .pill-main { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
+  .pill-main { display: flex; align-items: baseline; gap: 5px 10px; min-width: 0; }
   .pill-time { font-family: var(--font-mono); font-size: 26px; font-weight: 800; color: var(--text); line-height: 1.1; }
   .pill-arrow { font-size: 16px; margin-right: 4px; }
   .pill-arrow.low{color:var(--low-color)} .pill-arrow.high{color:var(--high-color)}
   .pill-ft { font-size: 16px; color: var(--text-muted); font-weight: 650; }
-  .debug-panel { margin-top: 8px; background: rgba(10,30,40,0.06); border: 1px solid rgba(42,122,148,0.24); border-radius: 12px; color: var(--text); overflow: hidden; }
-  .debug-panel summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 8px; align-items: baseline; padding: 8px 10px; }
+  .debug-panel { margin-top: 4px; background: rgba(10,30,40,0.06); border: 1px solid rgba(42,122,148,0.24); border-radius: 12px; color: var(--text); overflow: hidden; }
+  .debug-panel summary { cursor: pointer; list-style: none; display: flex; justify-content: space-between; gap: 4px 8px; align-items: baseline; padding: 4px 10px 4px 10px; }
   .debug-panel summary::-webkit-details-marker { display: none; }
   .debug-title-main::before { content: "▸"; display: inline-block; margin-right: 6px; transition: transform 0.16s ease; }
   .debug-panel[open] .debug-title-main::before { transform: rotate(90deg); }
   .debug-title { font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--wave-dark); font-weight: 850; }
   .debug-note { font-size: 11px; letter-spacing: 0; text-transform: none; color: var(--text-muted); font-weight: 650; }
-  .debug-body { max-height: 360px; overflow-y: auto; padding: 0 10px 10px; scrollbar-width: thin; }
-  .debug-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+  .debug-body { max-height: 360px; overflow-y: auto; padding: 0 10px 5px 10px; scrollbar-width: thin; }
+  .debug-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 3px 6px; }
   .debug-section { min-width: 0; }
-  .debug-section-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 850; margin: 4px 0 3px; }
-  .debug-line { display: flex; justify-content: space-between; gap: 8px; font-family: var(--font-mono); font-size: 10.5px; line-height: 1.35; border-top: 1px solid rgba(42,122,148,0.10); padding: 2px 0; }
+  .debug-section-title { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; font-weight: 850; margin: 2px 0 2px 0; }
+  .debug-line { display: flex; justify-content: space-between; gap: 4px 8px; font-family: var(--font-mono); font-size: 10.5px; line-height: 1.35; border-top: 1px solid rgba(42,122,148,0.10); padding: 1px 0 1px 0; }
   .debug-key { color: var(--text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .debug-value { color: var(--text); font-weight: 800; text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .debug-warn { color: #a51f1f; font-weight: 900; }
   @media (max-width: 520px) { .debug-grid { grid-template-columns: 1fr; } }
   @container (max-width: 520px) {
-    .card-outer { padding: 12px 14px 12px; border-radius: 20px; }
-    .header { display: block; margin-bottom: 8px; }
-    .title { font-size: 25px; line-height: 1.08; margin-bottom: 8px; }
+    .card-outer { padding: 6px 14px 6px 14px; border-radius: 20px; }
+    .header { display: block; margin-bottom: 4px; }
+    .title { font-size: 25px; line-height: 1.08; margin-bottom: 4px; }
     .subtitle { display: block; padding-top: 0; font-size: 12px; white-space: normal; }
-    .current-row { gap: 8px 10px; padding: 10px 12px; align-items: center; }
+    .current-row { gap: 4px 10px; padding: 5px 12px 5px 12px; align-items: center; }
     .current-label { font-size: 12px; }
     .current-value { font-size: 34px; }
     .condition-spacer { display: none; }
-    .condition-chip { order: 3; font-size: 12px; padding: 3px 8px; }
-    .direction-chip { order: 4; margin-left: auto; font-size: 16px; gap: 6px; }
+    .condition-chip { order: 3; font-size: 12px; padding: 2px 8px 2px 8px; }
+    .direction-chip { order: 4; margin-left: auto; font-size: 16px; gap: 3px 6px; }
     .pulse-dot { width: 10px; height: 10px; }
-    .chart-header { align-items: flex-start; flex-wrap: wrap; gap: 6px; }
+    .chart-header { align-items: flex-start; flex-wrap: wrap; gap: 3px 6px; }
     .section-label { font-size: 12px; }
-    .fish-badge-row { justify-content: flex-start; flex-wrap: wrap; gap: 5px; }
+    .fish-badge-row { justify-content: flex-start; flex-wrap: wrap; gap: 3px 5px; }
     .water-temp-chip, .fish-moon, .fish-score { font-size: 12px; }
     .chart-wrap { height: 92px; }
     .x-tick { font-size: 12px; }
-    .fish-footer { flex-wrap: wrap; gap: 5px 8px; }
+    .fish-footer { flex-wrap: wrap; gap: 3px 8px; }
     .fish-reason { flex: 1 0 100%; max-height: 38px; font-size: 11.5px; }
-    .safety-badge { font-size: 10.5px; padding: 2px 7px; }
+    .safety-badge { font-size: 10.5px; padding: 1px 7px 1px 7px; }
     .fish-next { margin-left: auto; font-size: 11.5px; }
-    .fish-legend { gap: 8px; flex-wrap: wrap; margin-top: 4px; }
-    .legend-item { font-size: 11.5px; gap: 4px; }
-    .tides-grid { gap: 8px; }
-    .tide-pill { padding: 8px 10px; }
+    .fish-legend { gap: 4px 8px; flex-wrap: wrap; margin-top: 2px; }
+    .legend-item { font-size: 11.5px; gap: 2px 4px; }
+    .tides-grid { gap: 4px 8px; }
+    .tide-pill { padding: 4px 10px 4px 10px; }
     .pill-label { font-size: 11.5px; letter-spacing: 0.06em; }
-    .pill-main { gap: 6px; flex-wrap: wrap; }
+    .pill-main { gap: 3px 6px; flex-wrap: wrap; }
     .pill-time { font-size: 22px; line-height: 1.05; }
     .pill-ft { font-size: 14px; }
   }
@@ -312,9 +321,9 @@ const STYLES = `
     .pill-main { justify-content: space-between; }
     .pill-time { font-size: 24px; }
   }
-  .loading,.error { text-align: center; padding: 30px 20px; color: var(--text-muted); font-size: 14px; }
+  .loading,.error { text-align: center; padding: 15px 20px 15px 20px; color: var(--text-muted); font-size: 14px; }
   .error{color:#c04444}
-  .spinner { width: 28px; height: 28px; border: 2px solid rgba(255,255,255,0.40); border-top-color: var(--wave); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 12px; }
+  .spinner { width: 28px; height: 28px; border: 2px solid rgba(255,255,255,0.40); border-top-color: var(--wave); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 6px auto; }
   @keyframes spin { to{transform:rotate(360deg)} }
 `;
 
@@ -329,6 +338,9 @@ class TideWiseCard extends HTMLElement {
     this._refreshInterval = null;
     this._clockInterval = null;
     this._chartCanvas = null;
+    this._forecastOffset = 0;
+    this._forecastResize = null;
+    this._onForecastResize = () => this._redrawForecast?.();
     this._fishBand = null;
     this._waitingForHassState = false;
   }
@@ -349,6 +361,10 @@ class TideWiseCard extends HTMLElement {
       wind_units: "auto",
       mode: "general",
       theme_mode: "tidewise",
+      show_title: true,
+      show_station: true,
+      show_next_low: true,
+      show_next_high: true,
       show_fishing_score: true,
       auto_sources: true,
       auto_surf_forecast: true,
@@ -380,6 +396,7 @@ class TideWiseCard extends HTMLElement {
     const provider = this._normalizeProvider(config.provider);
     if (provider === "noaa_coops" && !config.station) throw new Error("TideWise requires a NOAA station ID.");
     const previousConfig = this._config || {};
+    this._forecastOffset = 0;
     this._config = {
       title: config.title || "TideWise",
       provider,
@@ -414,6 +431,10 @@ class TideWiseCard extends HTMLElement {
       longitude: Number(config.longitude) || -78.886,
       mode: String(config.mode || "general").toLowerCase(),
       theme_mode: this._normalizeThemeMode(config.theme_mode),
+      show_title: config.show_title !== false,
+      show_station: config.show_station !== false,
+      show_next_low: config.show_next_low !== false,
+      show_next_high: config.show_next_high !== false,
       show_fishing_score: config.show_fishing_score !== false,
       auto_sources: config.auto_sources !== false,
       auto_surf_forecast: config.auto_surf_forecast !== false,
@@ -468,13 +489,17 @@ class TideWiseCard extends HTMLElement {
   }
 
   connectedCallback() {
+    window.addEventListener("resize", this._onForecastResize);
     this._refreshInterval = setInterval(() => this._fetchData(), 15 * 60 * 1000);
     this._clockInterval = setInterval(() => this._updateLive(), 60 * 1000);
   }
 
   disconnectedCallback() {
+    window.removeEventListener("resize", this._onForecastResize);
+    this._redrawForecast = null;
     clearInterval(this._refreshInterval);
     clearInterval(this._clockInterval);
+    this._forecastResize?.disconnect();
   }
 
   async _fetchData() {
@@ -492,14 +517,14 @@ class TideWiseCard extends HTMLElement {
     }
     const { station, units } = this._config;
     const today = this._dateStr(0);
-    const tomorrow = this._dateStr(1);
+    const forecastEnd = this._dateStr(6);
     const base = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter";
     const cp = `station=${station}&datum=MLLW&time_zone=lst_ldt&units=${units}&application=tidewise_card&format=json`;
     try {
       const autoPromise = this._config.auto_sources ? this._fetchAutoSources().catch((err) => ({ error: err.message })) : Promise.resolve({});
       const [cr, hr, autoData] = await Promise.all([
-        fetch(`${base}?begin_date=${today}&end_date=${tomorrow}&${cp}&product=predictions&interval=6`),
-        fetch(`${base}?begin_date=${today}&end_date=${tomorrow}&${cp}&product=predictions&interval=hilo`),
+        fetch(`${base}?begin_date=${today}&end_date=${forecastEnd}&${cp}&product=predictions&interval=6`),
+        fetch(`${base}?begin_date=${today}&end_date=${forecastEnd}&${cp}&product=predictions&interval=hilo`),
         autoPromise
       ]);
       const cj = await cr.json();
@@ -836,7 +861,7 @@ class TideWiseCard extends HTMLElement {
     const now = new Date();
     const offsetPadding = Math.abs(Number(this._config.time_offset_minutes) || 0) * 60 * 1000;
     const from = new Date(now.getTime() - 60 * 60 * 1000 - offsetPadding);
-    const to = new Date(now.getTime() + 25 * 60 * 60 * 1000 + offsetPadding);
+    const to = new Date(now.getTime() + 121 * 60 * 60 * 1000 + offsetPadding);
     try {
       const stationCode = this._canadaStationCodeFromInput(stationId);
       if (stationCode) {
@@ -1340,7 +1365,7 @@ class TideWiseCard extends HTMLElement {
     return rolling.length >= 4 ? rolling : predictions;
   }
 
-  _xAxisHtml(predictions) {
+  _xAxisHtml(predictions, future = false) {
     if (!predictions || predictions.length < 2) {
       return `<div class="x-row"><span class="x-tick">Now</span><span class="x-tick">+6h</span><span class="x-tick">+12h</span><span class="x-tick">+18h</span><span class="x-tick">+24h</span></div>`;
     }
@@ -1348,14 +1373,14 @@ class TideWiseCard extends HTMLElement {
     const end = this._parsePredictionTime(predictions[predictions.length - 1].t).getTime();
     const labels = [];
     for (let i = 0; i <= 4; i++) {
-      if (i === 0) {
+      if (i === 0 && !future) {
         labels.push(`<span class="x-tick">Now</span>`);
       } else {
         const tMs = start + ((end - start) * i / 4);
         const rounded = new Date(Math.round(tMs / 3600000) * 3600000);
         const h = rounded.getHours();
         const ap = h >= 12 ? "PM" : "AM";
-        labels.push(`<span class="x-tick">${((h % 12) || 12)}${ap}</span>`);
+        labels.push(`<span class="x-tick">${future && (i === 0 || i === 4) ? rounded.toLocaleDateString(undefined, { weekday: "short" }) + " " : ""}${((h % 12) || 12)}${ap}</span>`);
       }
     }
     return `<div class="x-row">${labels.join("")}</div>`;
@@ -2078,10 +2103,10 @@ class TideWiseCard extends HTMLElement {
     const root = this.shadowRoot.getElementById("root");
 
     root.innerHTML = `
-      <div class="header">
-        <div class="title">${this._config.title}</div>
-        <div class="subtitle">${providerInfo.stationLabel} ${stationLabel}</div>
-      </div>
+      ${this._config.show_title !== false || this._config.show_station !== false ? `<div class="header">
+        ${this._config.show_title !== false ? `<div class="title">${this._config.title}</div>` : ""}
+        ${this._config.show_station !== false ? `<div class="subtitle">${providerInfo.stationLabel} ${stationLabel}</div>` : ""}
+      </div>` : ""}
       <div class="current-row">
         <div class="current-icon">&#127754;</div>
         <div>
@@ -2100,8 +2125,12 @@ class TideWiseCard extends HTMLElement {
           <div class="section-label">${this._config.show_fishing_score ? "&#127907; Tide &amp; Fishing" : "Tide Forecast"}</div>
           ${headerBadges ? `<div class="fish-badge-row">${headerBadges}</div>` : ""}
         </div>
-        <div class="chart-wrap"><canvas id="tideCanvas"></canvas></div>
-        ${this._xAxisHtml(chartPredictions)}
+        <div class="forecast-scroll" id="forecastScroll" tabindex="0" role="region" aria-label="Tide forecast. Scroll right for up to five days ahead.">
+          <div id="forecastTrack"><div class="forecast-viewport" id="forecastViewport">
+            <div class="chart-wrap"><canvas id="tideCanvas"></canvas></div>
+            <div id="forecastAxis">${this._xAxisHtml(chartPredictions)}</div>
+          </div></div>
+        </div>
       </div>
       ${fish ? `
         <div class="fish-footer">
@@ -2116,23 +2145,103 @@ class TideWiseCard extends HTMLElement {
           <div class="legend-item fair"><div class="legend-dot fair"></div>Fair</div>
           <div class="legend-item slow"><div class="legend-dot slow"></div>Slow</div>
         </div>` : ""}
-      <div class="tides-grid">
-        ${this._pillHtml("low", nextLow, unitLabel)}
-        ${this._pillHtml("high", nextHigh, unitLabel)}
-      </div>
+      ${this._config.show_next_low !== false || this._config.show_next_high !== false ? `<div class="tides-grid${this._config.show_next_low === false || this._config.show_next_high === false ? " single-tide" : ""}">
+        ${this._config.show_next_low !== false ? this._pillHtml("low", nextLow, unitLabel) : ""}
+        ${this._config.show_next_high !== false ? this._pillHtml("high", nextHigh, unitLabel) : ""}
+      </div>` : ""}
       ${this._config.debug?.enabled && this._config.debug?.panel ? this._debugHtml(fish, chartPredictions, cur, rising, unitLabel) : ""}
     `;
 
     requestAnimationFrame(() => {
       this._chartCanvas = this.shadowRoot.getElementById("tideCanvas");
-      this._drawChart(chartPredictions, now, cur, unitLabel, fish?.scores || null, fish?.details || null, [nextHigh, nextLow].filter(Boolean));
+      this._setupForecastScroll(predictions, hilo, now, cur, unitLabel);
     });
+  }
+
+  // Draw only a 12-hour viewport: native scrolling supplies touch/trackpad inertia
+  // without stretching the original chart, labels or safe-tide overlays.
+  _forecastRange(predictions, now, offset = 0) {
+    const windowMs = 12 * 60 * 60 * 1000;
+    const last = this._parsePredictionTime(predictions[predictions.length - 1].t).getTime();
+    const maxOffset = Math.max(0, Math.min(now.getTime() + 5 * 86400000, last) - now.getTime() - windowMs);
+    const boundedOffset = Math.max(0, Math.min(offset, maxOffset));
+    const start = now.getTime() + boundedOffset;
+    const end = Math.min(start + windowMs, last);
+    const rows = predictions.filter((p) => {
+      const t = this._parsePredictionTime(p.t).getTime();
+      return t > start && t < end;
+    });
+    // Interpolate at the window boundaries, never beyond provider coverage.
+    const first = this._parsePredictionTime(predictions[0].t).getTime();
+    if (start >= first && end > start) {
+      rows.unshift({ t: this._formatNoaaTime(new Date(start)), v: String(this._interpolateHeight(predictions, new Date(start))) });
+      rows.push({ t: this._formatNoaaTime(new Date(end)), v: String(this._interpolateHeight(predictions, new Date(end))) });
+    }
+    return { predictions: rows.length >= 2 ? rows : this._rollingPredictions(predictions, now), offset: boundedOffset, maxOffset };
+  }
+
+  _setupForecastScroll(predictions, hilo, now, cur, unitLabel) {
+    this._forecastResize?.disconnect();
+    const scroll = this.shadowRoot.getElementById("forecastScroll");
+    const track = this.shadowRoot.getElementById("forecastTrack");
+    const viewport = this.shadowRoot.getElementById("forecastViewport");
+    const axis = this.shadowRoot.getElementById("forecastAxis");
+    if (!scroll) return;
+    const windowMs = 12 * 60 * 60 * 1000;
+    const range = this._forecastRange(predictions, now, this._forecastOffset);
+    this._forecastOffset = range.offset;
+    const draw = () => {
+      const visible = this._forecastRange(predictions, now, this._forecastOffset);
+      const future = visible.offset > 60000;
+      const fish = this._config.show_fishing_score
+        ? this._buildFishingScores(visible.predictions) : null;
+      const events = hilo.filter((p) => {
+        const time = this._parseHiloTime(p.t).getTime();
+        return time >= now.getTime() + visible.offset && time <= now.getTime() + visible.offset + windowMs;
+      });
+      axis.innerHTML = this._xAxisHtml(visible.predictions, future);
+      this._drawChart(visible.predictions, now, cur, unitLabel, fish?.scores || null, fish?.details || null,
+        future ? events : [events.find((p) => p.type === "H"), events.find((p) => p.type === "L")].filter(Boolean));
+    };
+    const resize = () => {
+      const width = scroll.clientWidth;
+      if (!width) return;
+      viewport.style.width = `${width}px`;
+      track.style.width = `${width * (1 + range.maxOffset / windowMs)}px`;
+      scroll.scrollLeft = width * this._forecastOffset / windowMs;
+      draw();
+    };
+    let frame = null;
+    scroll.addEventListener("scroll", () => {
+      this._forecastOffset = Math.min(range.maxOffset, scroll.scrollLeft / (scroll.clientWidth || 1) * windowMs);
+      if (frame !== null) return;
+      frame = requestAnimationFrame(() => { frame = null; draw(); });
+    }, { passive: true });
+    // Mouse drag complements native touch, trackpad and keyboard scrolling.
+    let drag = null;
+    scroll.addEventListener("pointerdown", (event) => {
+      if (event.pointerType !== "mouse" || event.button !== 0) return;
+      drag = { x: event.clientX, left: scroll.scrollLeft, scale: scroll.getBoundingClientRect().width / (scroll.clientWidth || 1) };
+      scroll.setPointerCapture(event.pointerId);
+      event.preventDefault();
+      scroll.focus({ preventScroll: true });
+    });
+    scroll.addEventListener("pointermove", (event) => {
+      if (drag) scroll.scrollLeft = drag.left + (drag.x - event.clientX) / (drag.scale || 1);
+    });
+    scroll.addEventListener("lostpointercapture", () => { drag = null; });
+    if (typeof ResizeObserver !== "undefined") {
+      this._forecastResize = new ResizeObserver(resize);
+      this._forecastResize.observe(scroll);
+    }
+    this._redrawForecast = resize;
+    resize();
   }
 
   _pillHtml(type, tide, unitLabel) {
     const label = type === "low" ? "Low" : "High";
     const arrow = type === "low" ? "↓" : "↑";
-    const labelRow = `<div style="margin-bottom:3px"><div class="pill-label ${type}">Next ${label} Tide</div></div>`;
+    const labelRow = `<div style="margin-bottom:2px"><div class="pill-label ${type}">Next ${label} Tide</div></div>`;
     if (!tide) {
       return `<div class="tide-pill">${labelRow}<div class="pill-time" style="font-size:18px;color:var(--text-muted)">No data</div></div>`;
     }
@@ -2403,16 +2512,23 @@ class TideWiseCard extends HTMLElement {
     const dpr = window.devicePixelRatio || 1;
     const W = canvas.offsetWidth || 340;
     const H = canvas.offsetHeight || 95;
-    canvas.width = W * dpr;
-    canvas.height = H * dpr;
+    // Include dashboard CSS zoom/transforms as well as browser/device scaling.
+    // Extra sampling keeps small canvas labels legible at fractional zoom levels.
+    const bounds = canvas.getBoundingClientRect?.();
+    canvas.width = Math.ceil((bounds?.width || W) * dpr * 2);
+    canvas.height = Math.ceil((bounds?.height || H) * dpr * 2);
     const ctx = canvas.getContext("2d");
-    ctx.scale(dpr, dpr);
+    ctx.scale(canvas.width / W, canvas.height / H);
     const vals = predictions.map((p) => parseFloat(p.v));
     const safeLimits = this._safeTideLimits();
     const limitValues = safeLimits.map((limit) => limit.value);
     const minV = Math.min(...vals, ...limitValues) - 0.5;
     const maxV = Math.max(...vals, ...limitValues) + 0.5;
-    const padL = 34;
+    ctx.font = "bold 11px monospace";
+    const padL = Math.max(40, Math.ceil(Math.max(
+      ctx.measureText(minV.toFixed(1)).width,
+      ctx.measureText(maxV.toFixed(1)).width
+    )) + 6);
     const padR = 8;
     const padT = 8;
     const padB = 12;
@@ -2434,9 +2550,9 @@ class TideWiseCard extends HTMLElement {
       ctx.lineTo(W - padR, y);
       ctx.stroke();
       ctx.fillStyle = theme.axis;
-      ctx.font = "bold 9px monospace";
+      ctx.font = "bold 11px monospace";
       ctx.textAlign = "right";
-      ctx.fillText(v.toFixed(1), padL - 3, y + 3);
+      ctx.fillText(v.toFixed(1), padL - 3, y + 4);
     }
 
     for (let i = 0; i < predictions.length - 1; i++) {
@@ -2565,6 +2681,7 @@ class TideWiseCard extends HTMLElement {
     ctx.lineJoin = "round";
     ctx.stroke();
 
+    if (now.getTime() < startMs || now.getTime() > endMs) return;
     const nx = Math.max(padL, Math.min(W - padR, padL + ((now.getTime() - startMs) / spanMs) * cW));
     const ny = toY(cur);
     ctx.setLineDash([3, 4]);
@@ -2705,6 +2822,10 @@ class TideWiseCardEditor extends HTMLElement {
       wind_units: "auto",
       mode: "general",
       theme_mode: "tidewise",
+      show_title: true,
+      show_station: true,
+      show_next_low: true,
+      show_next_high: true,
       show_fishing_score: true,
       auto_sources: true,
       auto_surf_forecast: true,
@@ -3746,6 +3867,22 @@ class TideWiseCardEditor extends HTMLElement {
           <div class="hint">Optional safe-tide limits draw labeled lines and lightly shade unsafe water levels on the chart. Values use the selected tide unit; leave either field blank to disable that limit.</div>
           ${safeTideRangeInvalid ? `<div class="hint"><strong>Check the safe range:</strong> minimum safe tide should not exceed maximum safe tide.</div>` : ""}
           <label class="check">
+            <input id="showTitle" type="checkbox" ${config.show_title !== false ? "checked" : ""}>
+            Show card title
+          </label>
+          <label class="check">
+            <input id="showStation" type="checkbox" ${config.show_station !== false ? "checked" : ""}>
+            Show station ID / name
+          </label>
+          <label class="check">
+            <input id="showNextLow" type="checkbox" ${config.show_next_low !== false ? "checked" : ""}>
+            Show next low tide
+          </label>
+          <label class="check">
+            <input id="showNextHigh" type="checkbox" ${config.show_next_high !== false ? "checked" : ""}>
+            Show next high tide
+          </label>
+          <label class="check">
             <input id="showFishing" type="checkbox" ${config.show_fishing_score !== false ? "checked" : ""}>
             Show fishing score
           </label>
@@ -3887,6 +4024,10 @@ class TideWiseCardEditor extends HTMLElement {
     this.shadowRoot.getElementById("maximumSafeTide")?.addEventListener("change", (event) => this._setOptionalNumber("maximum_safe_tide", event.target.value));
     this.shadowRoot.getElementById("mode")?.addEventListener("change", (event) => this._setValue("mode", event.target.value));
     this.shadowRoot.getElementById("themeMode")?.addEventListener("change", (event) => this._setValue("theme_mode", this._normalizeThemeMode(event.target.value)));
+    this.shadowRoot.getElementById("showTitle")?.addEventListener("change", (event) => this._setValue("show_title", event.target.checked));
+    this.shadowRoot.getElementById("showStation")?.addEventListener("change", (event) => this._setValue("show_station", event.target.checked));
+    this.shadowRoot.getElementById("showNextLow")?.addEventListener("change", (event) => this._setValue("show_next_low", event.target.checked));
+    this.shadowRoot.getElementById("showNextHigh")?.addEventListener("change", (event) => this._setValue("show_next_high", event.target.checked));
     this.shadowRoot.getElementById("showFishing")?.addEventListener("change", (event) => this._setValue("show_fishing_score", event.target.checked));
     this.shadowRoot.getElementById("autoSources")?.addEventListener("change", (event) => this._setValue("auto_sources", event.target.checked));
     this.shadowRoot.getElementById("autoSurfForecast")?.addEventListener("change", (event) => this._setValue("auto_surf_forecast", event.target.checked));
