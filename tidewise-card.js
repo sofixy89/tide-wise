@@ -2656,43 +2656,46 @@ class TideWiseCard extends HTMLElement {
     ctx.lineJoin = "round";
     ctx.stroke();
 
-    if (now.getTime() < startMs || now.getTime() > endMs) return;
-    const nx = Math.max(padL, Math.min(W - padR, padL + ((now.getTime() - startMs) / spanMs) * cW));
-    const ny = toY(cur);
-    ctx.setLineDash([3, 4]);
-    ctx.strokeStyle = "rgba(232,184,75,0.70)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(nx, padT);
-    ctx.lineTo(nx, H - padB);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.arc(nx, ny, 5, 0, Math.PI * 2);
-    ctx.fillStyle = theme.nowMarker;
-    ctx.fill();
-    ctx.strokeStyle = theme.nowMarkerStroke;
-    ctx.lineWidth = 2;
-    ctx.stroke();
+    if (now.getTime() >= startMs && now.getTime() <= endMs) {
+      const nx = Math.max(padL, Math.min(W - padR, padL + ((now.getTime() - startMs) / spanMs) * cW));
+      const ny = toY(cur);
+      ctx.setLineDash([3, 4]);
+      ctx.strokeStyle = "rgba(232,184,75,0.70)";
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(nx, padT);
+      ctx.lineTo(nx, H - padB);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.arc(nx, ny, 5, 0, Math.PI * 2);
+      ctx.fillStyle = theme.nowMarker;
+      ctx.fill();
+      ctx.strokeStyle = theme.nowMarkerStroke;
+      ctx.lineWidth = 2;
+      ctx.stroke();
 
-    if (this._config.show_now_timestamp !== false) {
-      const lbl = `NOW ${this._formatClock(now).replace(" ", "")}  ${cur.toFixed(1)}${unitLabel}`;
-      ctx.font = `bold ${this._config.tide_label_font_size || 9}px monospace`;
-      const tw = ctx.measureText(lbl).width;
-    let bx = nx - tw / 2 - 5;
-    let by = ny - 22;
-    if (bx < padL) bx = padL;
-    if (bx + tw + 10 > W - padR) bx = W - padR - tw - 10;
-    if (by < padT) by = ny + 8;
-    ctx.fillStyle = theme.nowLabelBg;
-    ctx.strokeStyle = theme.nowLabelBorder;
-    ctx.lineWidth = 1;
-    this._roundedRect(ctx, bx, by, tw + 10, 16, 4);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = theme.labelText;
-    ctx.textAlign = "left";
-      ctx.fillText(lbl, bx + 5, by + 11);
+      if (this._config.show_now_timestamp !== false) {
+        const fontSize = this._config.tide_label_font_size || 9;
+        const lbl = `NOW ${this._formatClock(now).replace(" ", "")}  ${cur.toFixed(1)}${unitLabel}`;
+        ctx.font = `bold ${fontSize}px monospace`;
+        const tw = ctx.measureText(lbl).width;
+        const boxHeight = Math.max(16, fontSize + 6);
+        let bx = nx - tw / 2 - 5;
+        let by = ny - boxHeight - 6;
+        if (bx < padL) bx = padL;
+        if (bx + tw + 10 > W - padR) bx = W - padR - tw - 10;
+        if (by < padT) by = ny + 8;
+        ctx.fillStyle = theme.nowLabelBg;
+        ctx.strokeStyle = theme.nowLabelBorder;
+        ctx.lineWidth = 1;
+        this._roundedRect(ctx, bx, by, tw + 10, boxHeight, 4);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = theme.labelText;
+        ctx.textAlign = "left";
+        ctx.fillText(lbl, bx + 5, by + fontSize + 2);
+      }
     }
 
     tideEvents.forEach((ev) => {
@@ -2719,24 +2722,26 @@ class TideWiseCard extends HTMLElement {
       ctx.strokeStyle = theme.markerStroke;
       ctx.lineWidth = 1.5;
       ctx.stroke();
-      ctx.font = `bold ${this._config.tide_label_font_size || 9}px monospace`;
+      const fontSize = this._config.tide_label_font_size || 9;
+      ctx.font = `bold ${fontSize}px monospace`;
       const lw = ctx.measureText(label).width;
+      const boxHeight = Math.max(15, fontSize + 6);
       let lx = ex - lw / 2 - 4;
-      let ly = ey + (isHigh ? -20 : 10);
+      let ly = ey + (isHigh ? -boxHeight - 5 : 10);
       if (lx < padL) lx = padL;
       if (lx + lw + 8 > W - padR) lx = W - padR - lw - 8;
       if (ly < padT) ly = ey + 10;
-      if (ly > H - padB - 16) ly = ey - 20;
-      ly = Math.max(padT, Math.min(H - padB - 16, ly));
+      if (ly > H - padB - boxHeight) ly = ey - boxHeight - 5;
+      ly = Math.max(padT, Math.min(H - padB - boxHeight, ly));
       ctx.fillStyle = theme.labelBg;
       ctx.strokeStyle = theme.labelBorder;
       ctx.lineWidth = 1;
-      this._roundedRect(ctx, lx, ly, lw + 8, 15, 4);
+      this._roundedRect(ctx, lx, ly, lw + 8, boxHeight, 4);
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = theme.labelText;
       ctx.textAlign = "left";
-      ctx.fillText(label, lx + 4, ly + 10);
+      ctx.fillText(label, lx + 4, ly + fontSize + 2);
     });
   }
 
