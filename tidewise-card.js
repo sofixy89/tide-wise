@@ -2134,7 +2134,7 @@ class TideWiseCard extends HTMLElement {
           <div class="section-label">${this._config.show_fishing_score ? "&#127907; Tide &amp; Fishing" : "Tide Forecast"}</div>
           ${headerBadges ? `<div class="fish-badge-row">${headerBadges}</div>` : ""}
         </div>
-        <div class="forecast-scroll" id="forecastScroll" tabindex="0" role="region" aria-label="Tide forecast. Scroll right for up to five days ahead.">
+        <div class="forecast-scroll ha-scrollbar" id="forecastScroll" tabindex="0" role="region" aria-label="Tide forecast. Scroll right for up to five days ahead.">
           <div id="forecastTrack"><div class="forecast-viewport" id="forecastViewport">
             <div class="chart-wrap"${this._config.chart_height != null ? ` style="--tw-chart-height: ${this._config.chart_height}px"` : ""}><canvas id="tideCanvas"></canvas></div>
             <div id="forecastAxis">${this._xAxisHtml(chartPredictions)}</div>
