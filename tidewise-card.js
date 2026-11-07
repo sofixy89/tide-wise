@@ -244,7 +244,7 @@ const STYLES = `
   .score-slow { background: rgba(192,80,48,0.14); color: #8a3018; }
   .water-temp-chip { font-size: 13px; color: var(--wave-dark); background: var(--tw-chip-bg); border: 1px solid var(--tw-chip-border); border-radius: 99px; padding: 1px 9px 1px 9px; white-space: nowrap; font-weight: 800; }
   .fish-moon { font-size: 13px; color: var(--text-muted); font-weight: 650; white-space: nowrap; }
-  .forecast-scroll { overflow-x: auto; scrollbar-width: none; direction: ltr; touch-action: pan-y; overscroll-behavior-x: contain; }
+  .forecast-scroll { width: 100%; min-width: 0; max-width: 100%; overflow-x: auto; overflow-y: clip; scrollbar-width: none; -ms-overflow-style: none; direction: ltr; touch-action: pan-x pan-y; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; user-select: none; -webkit-user-select: none; }
   .forecast-scroll::-webkit-scrollbar { display: none; }
   .forecast-viewport { position: sticky; left: 0; }
   .forecast-scroll:focus-visible { outline: 2px solid var(--wave); outline-offset: 2px; }
@@ -2237,41 +2237,6 @@ class TideWiseCard extends HTMLElement {
     });
     scroll.addEventListener("pointermove", (event) => {
       if (drag) scroll.scrollLeft = drag.left + (drag.x - event.clientX) / (drag.scale || 1);
-    });
-    // Claim horizontal finger drags for the chart; leave vertical page scrolling to HA.
-    let touchDrag = null;
-    scroll.addEventListener("pointerdown", (event) => {
-      if (event.pointerType !== "touch") return;
-      touchDrag = {
-        id: event.pointerId,
-        x: event.clientX,
-        y: event.clientY,
-        left: scroll.scrollLeft,
-        active: false
-      };
-    });
-    scroll.addEventListener("pointermove", (event) => {
-      if (!touchDrag || event.pointerId !== touchDrag.id) return;
-      const dx = event.clientX - touchDrag.x;
-      const dy = event.clientY - touchDrag.y;
-      if (!touchDrag.active) {
-        if (Math.abs(dx) < 7 || Math.abs(dx) <= Math.abs(dy) * 1.15) return;
-        touchDrag.active = true;
-        scroll.setPointerCapture(event.pointerId);
-      }
-      event.preventDefault();
-      event.stopPropagation();
-      scroll.scrollLeft = touchDrag.left - dx;
-    });
-    const clearTouchDrag = (event) => {
-      if (!touchDrag || (event && event.pointerId !== touchDrag.id)) return;
-      touchDrag = null;
-    };
-    scroll.addEventListener("pointerup", clearTouchDrag);
-    scroll.addEventListener("pointercancel", clearTouchDrag);
-    scroll.addEventListener("lostpointercapture", (event) => {
-      drag = null;
-      clearTouchDrag(event);
     });
     if (typeof ResizeObserver !== "undefined") {
       this._forecastResize = new ResizeObserver(resize);
