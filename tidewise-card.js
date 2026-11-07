@@ -373,6 +373,7 @@ class TideWiseCard extends HTMLElement {
       mode: "general",
       theme_mode: "tidewise",
       tide_label_font_size: 9,
+      show_now_timestamp: true,
       show_title: true,
       show_station: true,
       show_next_low: true,
@@ -446,6 +447,7 @@ class TideWiseCard extends HTMLElement {
       theme_mode: this._normalizeThemeMode(config.theme_mode),
       chart_height: normalizeChartHeight(config.chart_height),
       tide_label_font_size: normalizeTideLabelFontSize(config.tide_label_font_size),
+      show_now_timestamp: config.show_now_timestamp !== false,
       show_title: config.show_title !== false,
       show_station: config.show_station !== false,
       show_next_low: config.show_next_low !== false,
@@ -2643,6 +2645,56 @@ class TideWiseCard extends HTMLElement {
       ctx.fillText(label, labelX + 4, labelY + 10);
     });
 
+    ctx.beginPath();
+    predictions.forEach((p, i) => {
+      const x = toX(p);
+      const y = toY(parseFloat(p.v));
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.strokeStyle = theme.tideLine;
+    ctx.lineWidth = 2.5;
+    ctx.lineJoin = "round";
+    ctx.stroke();
+
+    if (now.getTime() < startMs || now.getTime() > endMs) return;
+    const nx = Math.max(padL, Math.min(W - padR, padL + ((now.getTime() - startMs) / spanMs) * cW));
+    const ny = toY(cur);
+    ctx.setLineDash([3, 4]);
+    ctx.strokeStyle = "rgba(232,184,75,0.70)";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(nx, padT);
+    ctx.lineTo(nx, H - padB);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.arc(nx, ny, 5, 0, Math.PI * 2);
+    ctx.fillStyle = theme.nowMarker;
+    ctx.fill();
+    ctx.strokeStyle = theme.nowMarkerStroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    if (this._config.show_now_timestamp !== false) {
+      const lbl = `NOW ${this._formatClock(now).replace(" ", "")}  ${cur.toFixed(1)}${unitLabel}`;
+      ctx.font = `bold ${this._config.tide_label_font_size || 9}px monospace`;
+      const tw = ctx.measureText(lbl).width;
+    let bx = nx - tw / 2 - 5;
+    let by = ny - 22;
+    if (bx < padL) bx = padL;
+    if (bx + tw + 10 > W - padR) bx = W - padR - tw - 10;
+    if (by < padT) by = ny + 8;
+    ctx.fillStyle = theme.nowLabelBg;
+    ctx.strokeStyle = theme.nowLabelBorder;
+    ctx.lineWidth = 1;
+    this._roundedRect(ctx, bx, by, tw + 10, 16, 4);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = theme.labelText;
+    ctx.textAlign = "left";
+      ctx.fillText(lbl, bx + 5, by + 11);
+    }
+
     tideEvents.forEach((ev) => {
       const evTime = this._parseHiloTime(ev.t);
       const evMs = evTime.getTime();
@@ -2686,54 +2738,6 @@ class TideWiseCard extends HTMLElement {
       ctx.textAlign = "left";
       ctx.fillText(label, lx + 4, ly + 10);
     });
-
-    ctx.beginPath();
-    predictions.forEach((p, i) => {
-      const x = toX(p);
-      const y = toY(parseFloat(p.v));
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
-    ctx.strokeStyle = theme.tideLine;
-    ctx.lineWidth = 2.5;
-    ctx.lineJoin = "round";
-    ctx.stroke();
-
-    if (now.getTime() < startMs || now.getTime() > endMs) return;
-    const nx = Math.max(padL, Math.min(W - padR, padL + ((now.getTime() - startMs) / spanMs) * cW));
-    const ny = toY(cur);
-    ctx.setLineDash([3, 4]);
-    ctx.strokeStyle = "rgba(232,184,75,0.70)";
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.moveTo(nx, padT);
-    ctx.lineTo(nx, H - padB);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.arc(nx, ny, 5, 0, Math.PI * 2);
-    ctx.fillStyle = theme.nowMarker;
-    ctx.fill();
-    ctx.strokeStyle = theme.nowMarkerStroke;
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    const lbl = `NOW  ${cur.toFixed(1)}${unitLabel}`;
-    ctx.font = "bold 9px monospace";
-    const tw = ctx.measureText(lbl).width;
-    let bx = nx - tw / 2 - 5;
-    let by = ny - 22;
-    if (bx < padL) bx = padL;
-    if (bx + tw + 10 > W - padR) bx = W - padR - tw - 10;
-    if (by < padT) by = ny + 8;
-    ctx.fillStyle = theme.nowLabelBg;
-    ctx.strokeStyle = theme.nowLabelBorder;
-    ctx.lineWidth = 1;
-    this._roundedRect(ctx, bx, by, tw + 10, 16, 4);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = theme.labelText;
-    ctx.textAlign = "left";
-    ctx.fillText(lbl, bx + 5, by + 11);
   }
 
   _roundedRect(ctx, x, y, w, h, r) {
@@ -2839,6 +2843,8 @@ class TideWiseCardEditor extends HTMLElement {
       wind_units: "auto",
       mode: "general",
       theme_mode: "tidewise",
+      tide_label_font_size: 9,
+      show_now_timestamp: true,
       show_title: true,
       show_station: true,
       show_next_low: true,
@@ -3893,7 +3899,11 @@ class TideWiseCardEditor extends HTMLElement {
             High/low tide timestamp font size (px)
             <input id="tideLabelFontSize" type="number" min="6" max="20" step="1" value="${normalizeTideLabelFontSize(config.tide_label_font_size)}" placeholder="9 (default)">
           </label>
-          <div class="hint">Controls the H/L time labels next to the high- and low-tide markers. Default: 9px.</div>
+          <div class="hint">Controls the H/L tide labels and the NOW timestamp. Default: 9px.</div>
+          <label class="check">
+            <input id="showNowTimestamp" type="checkbox" ${config.show_now_timestamp !== false ? "checked" : ""}>
+            Show NOW timestamp on chart
+          </label>
           <label class="check">
             <input id="showTitle" type="checkbox" ${config.show_title !== false ? "checked" : ""}>
             Show card title
@@ -4063,6 +4073,7 @@ class TideWiseCardEditor extends HTMLElement {
     this.shadowRoot.getElementById("tideLabelFontSize")?.addEventListener("change", (event) => {
       this._setOptionalNumber("tide_label_font_size", event.target.value);
     });
+    this.shadowRoot.getElementById("showNowTimestamp")?.addEventListener("change", (event) => this._setValue("show_now_timestamp", event.target.checked));
     this.shadowRoot.getElementById("showTitle")?.addEventListener("change", (event) => this._setValue("show_title", event.target.checked));
     this.shadowRoot.getElementById("showStation")?.addEventListener("change", (event) => this._setValue("show_station", event.target.checked));
     this.shadowRoot.getElementById("showNextLow")?.addEventListener("change", (event) => this._setValue("show_next_low", event.target.checked));
