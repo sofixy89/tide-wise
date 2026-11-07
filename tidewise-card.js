@@ -15,6 +15,11 @@ function normalizeChartHeight(value) {
   const height = Number(value);
   return Number.isFinite(height) ? Math.max(47.5, Math.min(190, height)) : null;
 }
+function normalizeTideLabelFontSize(value) {
+  if (value == null || String(value).trim() === "") return 9;
+  const size = Number(value);
+  return Number.isFinite(size) ? Math.max(6, Math.min(20, size)) : 9;
+}
 const CARD_TYPES = ["tidewise-card", "cherry-grove-tides-card"];
 const TIDEWISE_PROVIDERS = {
   noaa_coops: { label: "US NOAA CO-OPS", stationLabel: "NOAA" },
@@ -367,6 +372,7 @@ class TideWiseCard extends HTMLElement {
       wind_units: "auto",
       mode: "general",
       theme_mode: "tidewise",
+      tide_label_font_size: 9,
       show_title: true,
       show_station: true,
       show_next_low: true,
@@ -439,6 +445,7 @@ class TideWiseCard extends HTMLElement {
       mode: String(config.mode || "general").toLowerCase(),
       theme_mode: this._normalizeThemeMode(config.theme_mode),
       chart_height: normalizeChartHeight(config.chart_height),
+      tide_label_font_size: normalizeTideLabelFontSize(config.tide_label_font_size),
       show_title: config.show_title !== false,
       show_station: config.show_station !== false,
       show_next_low: config.show_next_low !== false,
@@ -2660,7 +2667,7 @@ class TideWiseCard extends HTMLElement {
       ctx.strokeStyle = theme.markerStroke;
       ctx.lineWidth = 1.5;
       ctx.stroke();
-      ctx.font = "bold 9px monospace";
+      ctx.font = `bold ${this._config.tide_label_font_size || 9}px monospace`;
       const lw = ctx.measureText(label).width;
       let lx = ex - lw / 2 - 4;
       let ly = ey + (isHigh ? -20 : 10);
@@ -3882,6 +3889,11 @@ class TideWiseCardEditor extends HTMLElement {
             <input id="chartHeight" type="number" min="47.5" max="190" step="0.5" value="${normalizeChartHeight(config.chart_height) ?? ""}" placeholder="95 (default)">
           </label>
           <div class="hint">47.5–190px (50–200%). Leave blank for the original responsive height: 95px on desktop, 92px or 86px on smaller cards. A custom height applies at all screen sizes.</div>
+          <label>
+            High/low tide timestamp font size (px)
+            <input id="tideLabelFontSize" type="number" min="6" max="20" step="1" value="${normalizeTideLabelFontSize(config.tide_label_font_size)}" placeholder="9 (default)">
+          </label>
+          <div class="hint">Controls the H/L time labels next to the high- and low-tide markers. Default: 9px.</div>
           <label class="check">
             <input id="showTitle" type="checkbox" ${config.show_title !== false ? "checked" : ""}>
             Show card title
@@ -4047,6 +4059,9 @@ class TideWiseCardEditor extends HTMLElement {
     this.shadowRoot.getElementById("chartHeight")?.addEventListener("change", (event) => {
       const height = normalizeChartHeight(event.target.value);
       this._setOptionalNumber("chart_height", height ?? "");
+    });
+    this.shadowRoot.getElementById("tideLabelFontSize")?.addEventListener("change", (event) => {
+      this._setOptionalNumber("tide_label_font_size", event.target.value);
     });
     this.shadowRoot.getElementById("showTitle")?.addEventListener("change", (event) => this._setValue("show_title", event.target.checked));
     this.shadowRoot.getElementById("showStation")?.addEventListener("change", (event) => this._setValue("show_station", event.target.checked));
