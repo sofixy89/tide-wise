@@ -2261,7 +2261,7 @@ class TideWiseCard extends HTMLElement {
         touchDrag.active = true;
         scroll.setPointerCapture(event.pointerId);
       }
-      scroll.scrollLeft = touchDrag.left - dx / (touchDrag.scale || 1);
+      scroll.scrollLeft = touchDrag.left - (dx / (touchDrag.scale || 1)) * 4;
     });
     const clearTouchDrag = (event) => {
       if (!touchDrag || (event && event.pointerId !== touchDrag.id)) return;
