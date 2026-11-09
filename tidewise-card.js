@@ -20,6 +20,11 @@ function normalizeTideLabelFontSize(value) {
   const size = Number(value);
   return Number.isFinite(size) ? Math.max(6, Math.min(20, size)) : 9;
 }
+function normalizeYAxisFontSize(value) {
+  if (value == null || String(value).trim() === "") return 11;
+  const size = Number(value);
+  return Number.isFinite(size) ? Math.max(6, Math.min(20, size)) : 11;
+}
 const CARD_TYPES = ["tidewise-card", "cherry-grove-tides-card"];
 const TIDEWISE_PROVIDERS = {
   noaa_coops: { label: "US NOAA CO-OPS", stationLabel: "NOAA" },
@@ -373,6 +378,8 @@ class TideWiseCard extends HTMLElement {
       mode: "general",
       theme_mode: "tidewise",
       tide_label_font_size: 9,
+      y_axis_font_size: 11,
+      y_axis_font_bold: true,
       show_now_timestamp: true,
       show_title: true,
       show_station: true,
@@ -447,6 +454,8 @@ class TideWiseCard extends HTMLElement {
       theme_mode: this._normalizeThemeMode(config.theme_mode),
       chart_height: normalizeChartHeight(config.chart_height),
       tide_label_font_size: normalizeTideLabelFontSize(config.tide_label_font_size),
+      y_axis_font_size: normalizeYAxisFontSize(config.y_axis_font_size),
+      y_axis_font_bold: config.y_axis_font_bold !== false,
       show_now_timestamp: config.show_now_timestamp !== false,
       show_title: config.show_title !== false,
       show_station: config.show_station !== false,
@@ -2541,7 +2550,9 @@ class TideWiseCard extends HTMLElement {
     const limitValues = safeLimits.map((limit) => limit.value);
     const minV = Math.min(...vals, ...limitValues) - 0.5;
     const maxV = Math.max(...vals, ...limitValues) + 0.5;
-    ctx.font = "bold 11px monospace";
+    const yAxisFontSize = normalizeYAxisFontSize(this._config.y_axis_font_size);
+    const yAxisFontWeight = this._config.y_axis_font_bold !== false ? "bold " : "";
+    ctx.font = `${yAxisFontWeight}${yAxisFontSize}px monospace`;
     const padL = Math.max(40, Math.ceil(Math.max(
       ctx.measureText(minV.toFixed(1)).width,
       ctx.measureText(maxV.toFixed(1)).width
@@ -2568,9 +2579,9 @@ class TideWiseCard extends HTMLElement {
       ctx.lineTo(W - padR, y);
       ctx.stroke();
       ctx.fillStyle = theme.axis;
-      ctx.font = "bold 11px monospace";
+      ctx.font = `${yAxisFontWeight}${yAxisFontSize}px monospace`;
       ctx.textAlign = "right";
-      ctx.fillText(v.toFixed(1), padL - 3, y + 4);
+      ctx.fillText(v.toFixed(1), padL - 3, y + yAxisFontSize * 0.36);
     }
 
     for (let i = 0; i < predictions.length - 1; i++) {
@@ -2849,6 +2860,8 @@ class TideWiseCardEditor extends HTMLElement {
       mode: "general",
       theme_mode: "tidewise",
       tide_label_font_size: 9,
+      y_axis_font_size: 11,
+      y_axis_font_bold: true,
       show_now_timestamp: true,
       show_title: true,
       show_station: true,
@@ -3905,6 +3918,15 @@ class TideWiseCardEditor extends HTMLElement {
             <input id="tideLabelFontSize" type="number" min="6" max="20" step="1" value="${normalizeTideLabelFontSize(config.tide_label_font_size)}" placeholder="9 (default)">
           </label>
           <div class="hint">Controls the H/L tide labels and the NOW timestamp. Default: 9px.</div>
+          <label>
+            Y-axis font size (px)
+            <input id="yAxisFontSize" type="number" min="6" max="20" step="1" value="${normalizeYAxisFontSize(config.y_axis_font_size)}" placeholder="11 (default)">
+          </label>
+          <div class="hint">Controls the tide-height numbers along the left side of the chart. Default: 11px.</div>
+          <label class="check">
+            <input id="yAxisFontBold" type="checkbox" ${config.y_axis_font_bold !== false ? "checked" : ""}>
+            Bold Y-axis labels
+          </label>
           <label class="check">
             <input id="showNowTimestamp" type="checkbox" ${config.show_now_timestamp !== false ? "checked" : ""}>
             Show NOW timestamp on chart
@@ -4078,6 +4100,10 @@ class TideWiseCardEditor extends HTMLElement {
     this.shadowRoot.getElementById("tideLabelFontSize")?.addEventListener("change", (event) => {
       this._setOptionalNumber("tide_label_font_size", event.target.value);
     });
+    this.shadowRoot.getElementById("yAxisFontSize")?.addEventListener("change", (event) => {
+      this._setOptionalNumber("y_axis_font_size", event.target.value);
+    });
+    this.shadowRoot.getElementById("yAxisFontBold")?.addEventListener("change", (event) => this._setValue("y_axis_font_bold", event.target.checked));
     this.shadowRoot.getElementById("showNowTimestamp")?.addEventListener("change", (event) => this._setValue("show_now_timestamp", event.target.checked));
     this.shadowRoot.getElementById("showTitle")?.addEventListener("change", (event) => this._setValue("show_title", event.target.checked));
     this.shadowRoot.getElementById("showStation")?.addEventListener("change", (event) => this._setValue("show_station", event.target.checked));
